@@ -4,6 +4,8 @@ import os.path
 import logging
 import sys
 
+from sh import git
+
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
 def fail(msg):
@@ -19,7 +21,10 @@ def update(repo, actions):
         fail('No directory at %s!' % repo)
     if not os.path.isdir(os.path.join(repo, '.git')):
         fail('No git repo at %s!' % repo)
-        
+    os.chdir(repo)
+    print git.fetch()
+    print git.status()
+
 def parse(config):
     'Parse config and yield repos with actions'
     with open(config) as f:
