@@ -8,10 +8,19 @@ from sh import git
 
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
+COMMIT = 'commit'
+
 def fail(msg):
     'Fail program with printed message'
     logging.error(msg)
     sys.exit(1)
+
+def is_dirty():
+    'parse git status and return True if tree is clean'
+    for line in git.status(porcelain=True):
+        if line.strip():
+            return True
+    return False
 
 def update(repo, actions):
     'Update repo according to allowed actions.'
@@ -22,8 +31,17 @@ def update(repo, actions):
     if not os.path.isdir(os.path.join(repo, '.git')):
         fail('No git repo at %s!' % repo)
     os.chdir(repo)
-    print git.fetch()
-    print git.status()
+
+    git.fetch()
+    if is_dirty():
+        if COMMIT in actions:
+            pass # TODO: do commit!
+        else:
+            logging.info('Skip repo with dirty tree:')
+            for line in git.status(porcelain=True):
+                logging.info(line.rstrip())
+            return
+    # TODO: handle pull, push
 
 def parse(config):
     'Parse config and yield repos with actions'
