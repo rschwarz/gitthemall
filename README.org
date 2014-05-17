@@ -1,0 +1,23 @@
+* git them all!
+Synchronize several git repositories automatically.
+
+Per repository, allow any of the these actions:
+ - =pull --rebase= from =origin=
+ - =commit= all changes from dirty tree, with timestamp in message
+ - =push= to =origin=
+
+The program fetches from =origin= and analyzes the current state. If
+allowed, it brings repos up-to-date. Otherwise, the user is informed
+about differences.
+
+* Configuration
+Configuration with simple text file:
+ - one line per repo
+ - first item is path to repo
+ - rest of line are comma-separated values from
+   - =pull=
+   - =commit=
+   - =push=
+
+* Dependencies
+=gitthemall= is developed in Python 2 and uses the =sh= package.
