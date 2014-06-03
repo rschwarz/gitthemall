@@ -20,8 +20,8 @@ def fail(msg):
     logging.error(msg)
     sys.exit(1)
 
-def update(repo, actions):
-    'Update repo according to allowed actions.'
+def goto(repo_path):
+    'find repo and change directory'
     repo = os.path.expanduser(repo)
     logging.debug('going to %s' % repo)
     if not os.path.isdir(repo):
@@ -37,6 +37,9 @@ def get_tree_state():
             return TreeState.dirty
     return TreeState.clean
 
+def update(repo, actions):
+    'Update repo according to allowed actions.'
+    goto(repo)
     git.fetch()
 
     tree_state = get_tree_state()
