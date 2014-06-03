@@ -9,20 +9,16 @@ from sh import git
 
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
-_actions = ('commit', 'pull', 'push')
-Action = namedtuple('Action', _actions)._make(_actions)
+def make_enum(name, values):
+    return namedtuple(name, values)._make(values)
+
+Action = make_enum('Action', ('commit', 'pull', 'push'))
+TreeState = make_enum('TreeState', ('clean', 'dirty'))
 
 def fail(msg):
     'Fail program with printed message'
     logging.error(msg)
     sys.exit(1)
-
-def is_dirty():
-    'parse git status and return True if tree is clean'
-    for line in git.status(porcelain=True):
-        if line.strip():
-            return True
-    return False
 
 def update(repo, actions):
     'Update repo according to allowed actions.'
@@ -34,8 +30,17 @@ def update(repo, actions):
         fail('No git repo at %s!' % repo)
     os.chdir(repo)
 
+def get_tree_state():
+    'parse git status and return True if tree is clean'
+    for line in git.status(porcelain=True):
+        if line.strip():
+            return TreeState.dirty
+    return TreeState.clean
+
     git.fetch()
-    if is_dirty():
+
+    tree_state = get_tree_state()
+    if tree_state == TreeState.dirty:
         if Action.commit in actions:
             pass # TODO: do commit!
         else:
