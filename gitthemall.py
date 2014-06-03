@@ -1,5 +1,6 @@
 #! /usr/bin/env python2
 import argparse
+from collections import namedtuple
 import os.path
 import logging
 import sys
@@ -8,7 +9,8 @@ from sh import git
 
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
-COMMIT = 'commit'
+_actions = ('commit', 'pull', 'push')
+Action = namedtuple('Action', _actions)._make(_actions)
 
 def fail(msg):
     'Fail program with printed message'
@@ -34,7 +36,7 @@ def update(repo, actions):
 
     git.fetch()
     if is_dirty():
-        if COMMIT in actions:
+        if Action.commit in actions:
             pass # TODO: do commit!
         else:
             logging.info('Skip repo with dirty tree:')
@@ -48,7 +50,11 @@ def parse(config):
     with open(config) as f:
         for line in f:
             items = line.strip().split(',')
-            yield items[0], items[1:]
+            repo_path, actions = items[0], items[1:]
+            for a in actions:
+                if a not in Action:
+                    raise ValueError('Unknown action: %s' % a)
+            yield repo_path, actions
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Keep git repos up-to-date.')
