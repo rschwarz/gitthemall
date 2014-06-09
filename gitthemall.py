@@ -12,7 +12,7 @@ logging.basicConfig(format='%(levelname)s: %(message)s')
 def make_enum(name, values):
     return namedtuple(name, values)._make(values)
 
-Action = make_enum('Action', ('commit', 'pull', 'push'))
+Action = make_enum('Action', ('fetch', 'commit', 'pull', 'push'))
 TreeState = make_enum('TreeState', ('clean', 'dirty'))
 
 def fail(msg):
@@ -30,6 +30,14 @@ def goto(repo_path):
         fail('No git repo at %s!' % repo)
     os.chdir(repo)
 
+def act(action):
+    'perform given git action (with side effects)'
+    assert action in Action
+    if action == Action.fetch:
+        git.fetch()
+    else:
+        raise NotImplementedError()
+
 def get_tree_state():
     'parse git status and return True if tree is clean'
     for line in git.status(porcelain=True):
@@ -40,7 +48,7 @@ def get_tree_state():
 def update(repo, actions):
     'Update repo according to allowed actions.'
     goto(repo)
-    git.fetch()
+    act(Action.fetch)
 
     tree_state = get_tree_state()
     if tree_state == TreeState.dirty:

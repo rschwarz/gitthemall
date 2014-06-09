@@ -2,6 +2,7 @@
 Synchronize several git repositories automatically.
 
 Per repository, allow any of the these actions:
+ - =fetch= from =origin= (always done implicitely)
  - =pull --rebase= from =origin=
  - =commit= all changes from dirty tree, with timestamp in message
  - =push= to =origin=
