@@ -35,6 +35,10 @@ def act(action):
     assert action in Action
     if action == Action.fetch:
         git.fetch()
+    elif action == Action.commit:
+        git.add('.', all=True)
+        msg = 'auto-commit by gitthemall'
+        git.commit(message=msg)
     else:
         raise NotImplementedError()
 
@@ -53,7 +57,7 @@ def update(repo, actions):
     tree_state = get_tree_state()
     if tree_state == TreeState.dirty:
         if Action.commit in actions:
-            pass # TODO: do commit!
+            act(Action.commit)
         else:
             logging.info('Skip repo with dirty tree:')
             for line in git.status(porcelain=True):
