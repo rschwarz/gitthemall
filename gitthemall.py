@@ -54,8 +54,7 @@ def update(repo, actions):
     goto(repo)
     act(Action.fetch)
 
-    tree_state = get_tree_state()
-    if tree_state == TreeState.dirty:
+    if get_tree_state() == TreeState.dirty:
         if Action.commit in actions:
             act(Action.commit)
         else:
@@ -63,6 +62,8 @@ def update(repo, actions):
             for line in git.status(porcelain=True):
                 logging.info(line.rstrip())
             return
+    assert get_tree_state() == TreeState.clean()
+
     # TODO: handle pull, push
 
 def parse(config):
