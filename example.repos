@@ -1,6 +1,6 @@
-~/emacs
-~/etc
-~/literature
-~/org
-~/src
-~/src/diss
+~/emacs,pull,push
+~/etc,pull,push
+~/literature,pull,push
+~/org,commit,pull,push
+~/src/diss,pull,push
+~/src/gitthemall,pull
