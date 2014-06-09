@@ -5,7 +5,7 @@ import os.path
 import logging
 import sys
 
-from sh import git
+from sh import git, ErrorReturnCode_1
 
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
@@ -14,6 +14,7 @@ def make_enum(name, values):
 
 Action = make_enum('Action', ('fetch', 'commit', 'pull', 'push'))
 TreeState = make_enum('TreeState', ('clean', 'dirty'))
+HeadState = make_enum('HeadState', ('up_to_date', 'older', 'newer', 'forked'))
 
 def fail(msg):
     'Fail program with printed message'
@@ -48,6 +49,27 @@ def get_tree_state():
         if line.strip():
             return TreeState.dirty
     return TreeState.clean
+
+def is_ancestor(parent, child):
+    try:
+        git('merge-base', parent, child, is_ancestor=True)
+        return True
+    except ErrorReturnCode_1:
+        return False
+
+def get_head_state():
+    local = 'HEAD'
+    remote = '@{upstream}'
+    if is_ancestor(remote, local):
+        if is_ancestor(local, remote):
+            return HeadState.up_to_date
+        else:
+            return HeadState.newer
+    else:
+        if is_ancestor(local, remote):
+            return HeadState.older
+        else:
+            return HeadState.forked
 
 def update(repo, actions):
     'Update repo according to allowed actions.'
