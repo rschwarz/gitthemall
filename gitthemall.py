@@ -87,7 +87,7 @@ def update(repo, actions):
             for line in git.status(porcelain=True):
                 logging.info(line.rstrip())
             return
-    assert get_tree_state() == TreeState.clean()
+    assert get_tree_state() == TreeState.clean
 
     # maybe pull?
     if get_head_state() in [HeadState.older, HeadState.forked]:
