@@ -43,7 +43,7 @@ def act(action):
         raise NotImplementedError()
 
 def get_tree_state():
-    'parse git status and return True if tree is clean'
+    'parse git status and return current tree state'
     for line in git.status(porcelain=True):
         if line.strip():
             return TreeState.dirty
