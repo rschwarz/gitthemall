@@ -23,7 +23,7 @@ def fail(msg):
 
 def goto(repo_path):
     'find repo and change directory'
-    repo = os.path.expanduser(repo)
+    repo = os.path.expanduser(repo_path)
     logging.debug('going to %s' % repo)
     if not os.path.isdir(repo):
         fail('No directory at %s!' % repo)
