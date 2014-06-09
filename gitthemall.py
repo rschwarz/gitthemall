@@ -40,6 +40,8 @@ def act(action):
         git.add('.', all=True)
         msg = 'auto-commit by gitthemall'
         git.commit(message=msg)
+    elif action == Action.pull:
+        git.pull(rebase=True)
     else:
         raise NotImplementedError()
 
@@ -76,6 +78,7 @@ def update(repo, actions):
     goto(repo)
     act(Action.fetch)
 
+    # maybe commit?
     if get_tree_state() == TreeState.dirty:
         if Action.commit in actions:
             act(Action.commit)
@@ -86,7 +89,15 @@ def update(repo, actions):
             return
     assert get_tree_state() == TreeState.clean()
 
-    # TODO: handle pull, push
+    # maybe pull?
+    if get_head_state() in [HeadState.older, HeadState.forked]:
+        if Action.pull in actions:
+            act(Action.pull)
+        else:
+            logging.info('Skip repo with HEAD behind.')
+            return
+
+    # maybe push?
 
 def parse(config):
     'Parse config and yield repos with actions'
