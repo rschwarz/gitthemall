@@ -98,6 +98,14 @@ def update(repo, actions):
             return
 
     # maybe push?
+    if get_head_state() == HeadState.newer:
+        if Action.push in actions:
+            act(Action.push)
+        else:
+            logging.info('Skip repo with HEAD ahead.')
+            return
+
+    assert get_head_state() == HeadState.up_to_date
 
 def parse(config):
     'Parse config and yield repos with actions'
