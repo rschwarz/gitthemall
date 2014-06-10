@@ -42,6 +42,8 @@ def act(action):
         git.commit(message=msg)
     elif action == Action.pull:
         git.pull(rebase=True)
+    elif action == Action.push:
+        git.push()
     else:
         raise NotImplementedError()
 
