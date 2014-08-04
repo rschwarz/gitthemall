@@ -5,12 +5,15 @@ import os.path
 import logging
 import sys
 
-from sh import git, ErrorReturnCode_1
+from sh import git, ErrorReturnCode_1, ErrorReturnCode_128
 
 logging.basicConfig(format='%(levelname)s: %(message)s')
 
 def make_enum(name, values):
     return namedtuple(name, values)._make(values)
+
+class RepoNotAvailable(Exception):
+    pass
 
 Action = make_enum('Action', ('fetch', 'commit', 'pull', 'push'))
 TreeState = make_enum('TreeState', ('clean', 'dirty'))
@@ -35,7 +38,10 @@ def act(action):
     'perform given git action (with side effects)'
     assert action in Action
     if action == Action.fetch:
-        git.fetch()
+        try:
+            git.fetch()
+        except ErrorReturnCode_128 as e:
+            raise RepoNotAvailable(e)
     elif action == Action.commit:
         git.add('.', all=True)
         msg = 'auto-commit by gitthemall'
@@ -78,7 +84,11 @@ def get_head_state():
 def update(repo, actions):
     'Update repo according to allowed actions.'
     goto(repo)
-    act(Action.fetch)
+    try:
+        act(Action.fetch)
+    except RepoNotAvailable as e:
+        logging.info('Skip unavailable repo: %s' % e)
+        return
 
     # maybe commit?
     if get_tree_state() == TreeState.dirty:
