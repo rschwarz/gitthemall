@@ -132,12 +132,14 @@ def parse(config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Keep git repos up-to-date.')
-    parser.add_argument('config', type=str, help='config file that lists repos')
+    parser.add_argument('--config', type=str, default='~/.gitthemall',
+                        help='config file that lists repos')
     parser.add_argument('-v', '--verbose', default=False, action='store_true')
     args = parser.parse_args()
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    for repo, actions in parse(args.config):
+    config = os.path.expanduser(args.config)
+    for repo, actions in parse(config):
         update(repo, actions)
