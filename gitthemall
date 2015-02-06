@@ -27,7 +27,7 @@ def fail(msg):
 def goto(repo_path):
     'find repo and change directory'
     repo = os.path.expanduser(repo_path)
-    logging.debug('going to %s' % repo)
+    logging.info('going to %s' % repo)
     if not os.path.isdir(repo):
         fail('No directory at %s!' % repo)
     if not os.path.isdir(os.path.join(repo, '.git')):
@@ -87,7 +87,7 @@ def update(repo, actions):
     try:
         act(Action.fetch)
     except RepoNotAvailable as e:
-        logging.info('Skip unavailable repo: %s' % e)
+        logging.warning('Skip unavailable repo: %s' % e)
         return
 
     # maybe commit?
@@ -95,9 +95,9 @@ def update(repo, actions):
         if Action.commit in actions:
             act(Action.commit)
         else:
-            logging.info('Skip repo with dirty tree:')
+            logging.warning('Skip repo with dirty tree:')
             for line in git.status(porcelain=True):
-                logging.info(line.rstrip())
+                logging.warning(line.rstrip())
             return
     assert get_tree_state() == TreeState.clean
 
@@ -106,7 +106,7 @@ def update(repo, actions):
         if Action.pull in actions:
             act(Action.pull)
         else:
-            logging.info('Skip repo with HEAD behind.')
+            logging.warning('Skip repo with HEAD behind.')
             return
 
     # maybe push?
@@ -114,7 +114,7 @@ def update(repo, actions):
         if Action.push in actions:
             act(Action.push)
         else:
-            logging.info('Skip repo with HEAD ahead.')
+            logging.warning('Skip repo with HEAD ahead.')
             return
 
     assert get_head_state() == HeadState.up_to_date
@@ -138,7 +138,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger().setLevel(logging.INFO)
+    else:
+        logging.getLogger().setLevel(logging.WARN)
 
     config = os.path.expanduser(args.config)
     for repo, actions in parse(config):
