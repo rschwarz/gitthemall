@@ -117,7 +117,7 @@ def update(repo, actions, remote=None):
         if Action.commit in actions:
             act(Action.commit)
         else:
-            logging.warning('Skip repo with dirty tree:')
+            logging.warning('Skip repo (%s) with dirty tree:' % os.getcwd())
             for line in git.status(porcelain=True):
                 logging.warning(line.rstrip())
             return
@@ -129,7 +129,7 @@ def update(repo, actions, remote=None):
         if Action.pull in actions:
             act(Action.pull, remote)
         else:
-            logging.warning('Skip repo with HEAD behind.')
+            logging.warning('Skip repo (%s) with HEAD behind.' % os.getcwd())
             return
 
     # maybe push?
@@ -137,7 +137,7 @@ def update(repo, actions, remote=None):
         if Action.push in actions:
             act(Action.push, remote)
         else:
-            logging.warning('Skip repo with HEAD ahead.')
+            logging.warning('Skip repo (%s) with HEAD ahead.' % os.getcwd())
             return
 
     assert get_head_state(remote) == HeadState.up_to_date
