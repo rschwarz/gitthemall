@@ -11,6 +11,12 @@ The program fetches from =origin= and analyzes the current state. If
 allowed, it brings repos up-to-date. Otherwise, the user is informed
 about differences.
 
+Using the option =--remote=, the =origin= repository may be overridden
+temporarily with a path for the =fetch=, =pull= and =push= actions. In case
+no repository is found at that path, a bare repository is cloned
+there. This feature is useful for offline synchronization using an USB
+key.
+
 * Configuration
 Configuration with simple text file:
  - one line per repo
