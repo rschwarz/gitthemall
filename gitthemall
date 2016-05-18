@@ -1,6 +1,7 @@
 #! /usr/bin/env python2
 import argparse
 from collections import namedtuple
+import os
 import os.path
 import logging
 import sys
@@ -34,22 +35,39 @@ def goto(repo_path):
         fail('No git repo at %s!' % repo)
     os.chdir(repo)
 
-def act(action):
+def act(action, remote=None):
     'perform given git action (with side effects)'
     assert action in Action
+    logging.info('calling %s' % action)
+
     if action == Action.fetch:
-        try:
-            git.fetch()
-        except ErrorReturnCode_128 as e:
-            raise RepoNotAvailable(e)
+        if remote is None:
+            try:
+                git.fetch()
+            except ErrorReturnCode_128 as e:
+                raise RepoNotAvailable(e)
+        else:
+            try:
+                git.fetch(remote)
+            except ErrorReturnCode_128 as e:
+                # clone to remote path
+                repository = os.getcwd()
+                directory = remote
+                git.clone(repository, directory, bare=True)
     elif action == Action.commit:
         git.add('.', all=True)
         msg = 'auto-commit by gitthemall'
         git.commit(message=msg)
     elif action == Action.pull:
-        git.pull(rebase=True)
+        if remote is None:
+            git.pull(rebase=True)
+        else:
+            git.pull(remote, rebase=True)
     elif action == Action.push:
-        git.push()
+        if remote is None:
+            git.push()
+        else:
+            git.push(remote)
     else:
         raise NotImplementedError()
 
@@ -67,9 +85,13 @@ def is_ancestor(parent, child):
     except ErrorReturnCode_1:
         return False
 
-def get_head_state():
+def get_head_state(remote=None):
     local = 'HEAD'
-    remote = '@{upstream}'
+    if remote is None:
+        remote = '@{upstream}'
+    else:
+        _ls_remote = getattr(git, 'ls-remote')
+        remote = _ls_remote(remote, 'HEAD').split()[0]
     if is_ancestor(remote, local):
         if is_ancestor(local, remote):
             return HeadState.up_to_date
@@ -81,11 +103,11 @@ def get_head_state():
         else:
             return HeadState.forked
 
-def update(repo, actions):
+def update(repo, actions, remote=None):
     'Update repo according to allowed actions.'
     goto(repo)
     try:
-        act(Action.fetch)
+        act(Action.fetch, remote)
     except RepoNotAvailable as e:
         logging.warning('Skip unavailable repo: %s' % e)
         return
@@ -99,25 +121,35 @@ def update(repo, actions):
             for line in git.status(porcelain=True):
                 logging.warning(line.rstrip())
             return
+
     assert get_tree_state() == TreeState.clean
 
     # maybe pull?
-    if get_head_state() in [HeadState.older, HeadState.forked]:
+    if get_head_state(remote) in [HeadState.older, HeadState.forked]:
         if Action.pull in actions:
-            act(Action.pull)
+            act(Action.pull, remote)
         else:
             logging.warning('Skip repo with HEAD behind.')
             return
 
     # maybe push?
-    if get_head_state() == HeadState.newer:
+    if get_head_state(remote) == HeadState.newer:
         if Action.push in actions:
-            act(Action.push)
+            act(Action.push, remote)
         else:
             logging.warning('Skip repo with HEAD ahead.')
             return
 
-    assert get_head_state() == HeadState.up_to_date
+    assert get_head_state(remote) == HeadState.up_to_date
+
+def override_remote(root, repo):
+    'compute new remote location based of given root'
+    if root is None:
+        return None
+
+    clean_path = repo.rstrip('/')
+    name = os.path.basename(clean_path)
+    return os.path.join(root, name)
 
 def parse(config):
     'Parse config and yield repos with actions'
@@ -135,6 +167,8 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default='~/.gitthemall',
                         help='config file that lists repos')
     parser.add_argument('-v', '--verbose', default=False, action='store_true')
+    parser.add_argument('--remote', type=str, default=None,
+                        help='Override root path for remote (eg USB key)')
     args = parser.parse_args()
 
     if args.verbose:
@@ -142,6 +176,8 @@ if __name__ == '__main__':
     else:
         logging.getLogger().setLevel(logging.WARN)
 
+    remote_root = args.remote
     config = os.path.expanduser(args.config)
     for repo, actions in parse(config):
-        update(repo, actions)
+        remote = override_remote(remote_root, repo)
+        update(repo, actions, remote)
